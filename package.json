@@ -1,0 +1,29 @@
+{
+  "name": "hashnodebot",
+  "version": "0.0.1",
+  "description": "Unofficial Hashnode Discord bot",
+  "main": "out/init.js",
+  "scripts": {
+    "test": "yarn tsc && node ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Floffah/hashnodebot.git"
+  },
+  "author": "Floffah",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Floffah/hashnodebot/issues"
+  },
+  "homepage": "https://github.com/Floffah/hashnodebot#readme",
+  "dependencies": {
+    "chalk": "^4.1.0",
+    "discord.js": "^12.3.1",
+    "timestamp": "^0.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^14.6.0",
+    "@types/ws": "^7.2.6",
+    "typescript": "^3.9.7"
+  }
+}
