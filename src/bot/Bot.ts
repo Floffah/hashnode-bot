@@ -43,7 +43,7 @@ export default class Bot {
                 afk: false,
                 status: "online",
                 activity: {
-                    name: "0 Hashnode blogs",
+                    name: "Hashnode blogs",
                     type: "WATCHING"
                 }
             }
