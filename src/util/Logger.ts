@@ -1,9 +1,11 @@
-import chalk from "chalk";
+import {Console} from "console";
 
-const timestamp = require('timestamp');
+const timestamp = require('time-stamp');
+const chalk = require('chalk');
 
 export default class Logger {
     last: number
+    console:Console = new Console(process.stdout, process.stderr);
 
     constructor() {
         this.last = Date.now();
@@ -45,8 +47,8 @@ export default class Logger {
                 break;
         }
         let newer = Date.now();
-        let message = chalk`{blue ${timestamp("HH:mm.ss")}} ${sts} ${type === "error" || type === "fatal" ? chalk`{red ${messages.join(" ")}}` : messages.join(" ")} {cyan +${newer - this.last}ms}`;
-        console.log(message);
+        let message = chalk`{blue ${timestamp("HH:mm.ss")}} ${sts} ${type === "error" || type === "fatal" ? chalk`{red ${messages.join(" ")}}` : `${messages.join(" ")}`} {cyan +${newer - this.last}ms}`;
+        this.console.log(message);
         this.last = newer;
     }
 }

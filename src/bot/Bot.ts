@@ -13,17 +13,19 @@ export default class Bot {
     commands: Map<string, commandMapInfo>;
 
     client: Client;
-    logger: Logger
+    log: Logger = new Logger();
 
     paths: Map<string, string>;
 
     guilds: Map<string, guilddata>
+    links: Map<string, string[]>;
 
     constructor() {
         this.modules = new Map();
         this.commands = new Map();
 
         this.guilds = new Map();
+        this.links = new Map();
 
         this.paths = new Map([
             ["cache", resolve(__dirname, '../../data/cache')],
@@ -36,7 +38,6 @@ export default class Bot {
             }
         }
 
-        this.logger = new Logger();
         this.client = new Client({
             presence: {
                 afk: false,
@@ -48,7 +49,9 @@ export default class Bot {
             }
         });
 
-        this.client.on('ready', () => this.ready());
+        this.client.on('ready', () => {this.ready()});
+
+        this.log.info("Bot initialised. Starting...");
 
         this.start();
     }
@@ -58,9 +61,10 @@ export default class Bot {
     }
 
     ready() {
+        this.log.info(`Logged in as ${this.client.user?.tag}`);
         readdirSync(resolve(__dirname, '../modules')).forEach((p) => {
             if (lstatSync(resolve(__dirname, '../modules', p)).isDirectory()) return false;
-            let module = require(resolve(__dirname, '../modules', p)),
+            let module = require(resolve(__dirname, '../modules', p)).default,
                 Module: Module;
             try {
                 Module = new module(this);
@@ -77,7 +81,7 @@ export default class Bot {
                 commands: []
             });
             Module.ready();
-            this.logger.info(`Registered module ${Module.info.name}`);
+            this.log.info(`Registered module ${Module.info.name}`);
 
             return true;
         });
@@ -97,6 +101,23 @@ export default class Bot {
         });
     }
 
+    registerCommand(module: Module, command: Command) {
+        this.commands.set(command.info.name, {
+            module: module.info.name,
+            instance: command,
+        });
+        command.info.alias.forEach(alias => {
+            this.commands.set(alias, {
+                alias: command.info.name
+            })
+        });
+        let emodule = this.modules.get(module.info.name);
+        if(emodule !== undefined) {
+            emodule.commands.push(command.info.name);
+            this.modules.set(module.info.name, emodule);
+        }
+    }
+
     handleCommand(msg: Message) {
         if (msg.content.startsWith(config.prefix)) {
             let command = msg.content.split(" ")[0].replace(config.prefix, "").toLowerCase(),
@@ -114,14 +135,15 @@ export default class Bot {
                 }
                 if (cmd === undefined) return;
                 try {
-                    cmd.instance.run(msg, args);
+                    cmd.instance?.run(msg, args);
                 } catch (e) {
                     msg.reply(`There was an error while executing this command. Message: ${e.message}`);
                     console.error(e);
                 }
-            } else {
-                msg.reply("Sorry, that command does not exist!");
             }
+            // } else {
+            //     msg.reply("Sorry, that command does not exist!");
+            // }
         }
     }
 }
@@ -134,7 +156,7 @@ export interface moduleMapInfo {
 }
 
 export interface commandMapInfo {
-    module: string,
-    instance: Command,
-    alias: string
+    module?: string,
+    instance?: Command,
+    alias?: string
 }

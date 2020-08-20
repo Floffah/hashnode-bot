@@ -1,5 +1,6 @@
 import Module from "../bot/Module";
 import Bot from "../bot/Bot";
+import Help from "../commands/util/Help";
 
 export default class Util extends Module {
     constructor(bot: Bot) {
@@ -9,6 +10,6 @@ export default class Util extends Module {
     }
 
     ready() {
-        this.bot.logger.info(`Logged in as ${this.bot.client.user?.tag}`);
+        this.bot.registerCommand(this, new Help(this.bot));
     }
 }
