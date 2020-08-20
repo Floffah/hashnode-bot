@@ -29,6 +29,8 @@ export default class extends Command {
             }
         });
 
+        emb.addField("Info", `Please note this bot was not made by the Hashnode team but was made with permission.\n[Join my Discord](https://discord.gg/bc8Y2y9) for support`)
+
         msg.channel.send(emb);
     }
 }

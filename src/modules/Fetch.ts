@@ -4,7 +4,7 @@ import {existsSync, readdirSync, readFileSync, unlinkSync, writeFileSync} from "
 import {resolve} from "path";
 import {EventEmitter} from "events";
 import {request} from "graphql-request/dist";
-import {MessageEmbed, TextChannel} from "discord.js";
+import {MessageEmbed} from "discord.js";
 import Assign from "../commands/fetch/Assign";
 
 export default class Util extends Module {
@@ -28,7 +28,7 @@ export default class Util extends Module {
         setInterval(() => {
             this.guildinit();
             this.fetch()
-        }, 15000);
+        }, 30000);
     }
 
     guildinit() {
@@ -69,33 +69,36 @@ export default class Util extends Module {
             let link = this.bot.links.get(l);
             let query = `query{user(username: "${l}"){_id name publication{posts (page: 0){dateAdded cuid title brief coverImage slug}}}}`
             request('https://api.hashnode.com/', query).then(res => {
-                if (!res.error) {
+                if (!res.error && res.user.publication) {
                     res.user.publication.posts.forEach((post: post) => {
-                        if (existsSync(resolve(<string>this.bot.paths.get("cache"), `${l}.json`))) {
-                            let cache: cache = JSON.parse(readFileSync(resolve(<string>this.bot.paths.get("cache"), `${l}.json`), 'utf8'));
-                            if (!cache.posts.includes(post.cuid)) {
-                                let embed = new MessageEmbed()
-                                    .setTitle(post.title)
-                                    .setURL(`https://${l}.hashnode.dev/${post.slug}-${post.cuid}`)
-                                    .setImage(post.coverImage)
-                                    .setFooter(`${res.user.name} on Hashnode`)
-                                    .setTimestamp(new Date(post.dateAdded))
-                                    .setDescription(post.brief)
-                                    .setColor("#3366FF");
-                                if (link !== undefined) {
-                                    link.forEach((channel) => {
-                                        console.log(`${channel}`);
-                                        this.bot.client.channels.fetch(`${channel}`).then((ch) => {
-                                            if(ch !== null) {
-                                                //@ts-ignore
-                                                ch.send(embed);
-                                            }
-                                        });
+                        let cache:cache;
+                        if (!existsSync(resolve(<string>this.bot.paths.get("cache"), `${l}.json`))) {
+                            cache = {posts:[]};
+                        } else {
+                            cache = require(resolve(<string>this.bot.paths.get("cache"), `${l}.json`));
+                        }
+
+                        if (cache && !cache.posts?.includes(post.cuid)) {
+                            let embed = new MessageEmbed()
+                                .setTitle(post.title)
+                                .setURL(`https://${l}.hashnode.dev/${post.slug}-${post.cuid}`)
+                                .setImage(post.coverImage)
+                                .setFooter(`${res.user.name} on Hashnode`)
+                                .setTimestamp(new Date(post.dateAdded))
+                                .setDescription(post.brief)
+                                .setColor("#3366FF");
+                            if (link !== undefined) {
+                                link.forEach((channel) => {
+                                    this.bot.client.channels.fetch(`${channel}`).then((ch) => {
+                                        if (ch !== null) {
+                                            //@ts-ignore
+                                            ch.send(embed);
+                                        }
                                     });
-                                }
-                                cache.posts.push(post.cuid);
-                                writeFileSync(resolve(<string>this.bot.paths.get("cache"), `${l}.json`), JSON.stringify(cache, null, 4));
+                                });
                             }
+                            cache.posts.push(post.cuid);
+                            writeFileSync(resolve(<string>this.bot.paths.get("cache"), `${l}.json`), JSON.stringify(cache, null, 4));
                         }
                     });
                 }
