@@ -43,13 +43,15 @@ export default class Bot {
                 afk: false,
                 status: "online",
                 activity: {
-                    name: "Hashnode blogs",
+                    name: `the bot reboot`,
                     type: "WATCHING"
                 }
             }
         });
 
-        this.client.on('ready', () => {this.ready()});
+        this.client.on('ready', () => {
+            this.ready()
+        });
 
         this.log.info("Bot initialised. Starting...");
 
@@ -58,6 +60,17 @@ export default class Bot {
 
     start() {
         this.client.login(config.token);
+
+        setInterval(() => {
+            this.client.user?.setPresence({
+                afk: false,
+                status: "online",
+                activity: {
+                    name: `${readdirSync(<string>this.paths.get("cache")).length} Hashnode blogs across ${this.client.guilds.cache.size} servers`,
+                    type: "WATCHING"
+                }
+            })
+        }, 5000);
     }
 
     ready() {
@@ -112,7 +125,7 @@ export default class Bot {
             })
         });
         let emodule = this.modules.get(module.info.name);
-        if(emodule !== undefined) {
+        if (emodule !== undefined) {
             emodule.commands.push(command.info.name);
             this.modules.set(module.info.name, emodule);
         }
