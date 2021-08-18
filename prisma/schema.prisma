@@ -1,0 +1,22 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Follow {
+  id Int @id @default(autoincrement())
+
+  guildId   String
+  channelId String
+  username  String
+
+  publicationDomain String
+
+  previousCuids String[]
+
+  @@unique([guildId, channelId, username])
+}

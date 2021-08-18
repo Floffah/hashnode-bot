@@ -1,175 +1,142 @@
-import Module from "./Module";
-import Command from "./Command";
-import {Client, Message} from "discord.js";
-import {existsSync, lstatSync, mkdirSync, readdirSync} from "fs";
-import {resolve} from "path";
-import Logger from "../util/Logger";
-import {guilddata} from "../modules/Fetch";
+import "source-map-support/register";
+import { Client, Collection, Interaction, TextChannel } from "discord.js";
+import { Config } from "../util/config";
+import { resolve } from "path";
+import { parse, stringify } from "ini";
+import { readFileSync, writeFileSync } from "fs";
+import { GraphQLClient } from "graphql-request";
+import { PrismaClient } from "@prisma/client";
+import Fetcher from "./Fetcher";
+import Command from "../commands/Command";
+import { REST } from "@discordjs/rest";
+import { Routes } from "discord-api-types/v9";
+import chalk from "chalk";
+import Subscribe from "../commands/Subscribe";
+import { ApplicationCommandTypes } from "../util/enums";
 
-const config = require("../../data/config.json")
+const commands: { new (): Command }[] = [Subscribe];
 
-export default class Bot {
-    modules: Map<string, moduleMapInfo>;
-    commands: Map<string, commandMapInfo>;
+export default class Bot extends Client {
+    gql: GraphQLClient;
+    db: PrismaClient;
+    fetcher: Fetcher;
+    restClient: REST;
 
-    client: Client;
-    log: Logger = new Logger();
+    configpath = resolve(process.cwd(), ".hashnode-bot", "config.ini");
+    config: Config;
 
-    paths: Map<string, string>;
-
-    guilds: Map<string, guilddata>
-    links: Map<string, string[]>;
+    commands: Collection<string, Command> = new Collection();
 
     constructor() {
-        this.modules = new Map();
-        this.commands = new Map();
+        super({
+            intents: ["GUILD_MESSAGES"],
+        });
+    }
 
-        this.guilds = new Map();
-        this.links = new Map();
+    loadConfig() {
+        this.config = parse(readFileSync(this.configpath, "utf-8")) as Config;
+    }
 
-        this.paths = new Map([
-            ["cache", resolve(__dirname, '../../data/cache')],
-            ["guilds", resolve(__dirname, '../../data/guilds')]
-        ]);
+    writeConfig() {
+        writeFileSync(this.configpath, stringify(this.config));
+    }
 
-        for (let path of this.paths.values()) {
-            if (!existsSync(path)) {
-                mkdirSync(path);
-            }
+    async init() {
+        this.loadConfig();
+
+        this.db = new PrismaClient();
+        this.gql = new GraphQLClient("https://api.hashnode.com/");
+        this.fetcher = new Fetcher(this);
+
+        for (const cmd of commands) {
+            const command = new cmd();
+            command.bot = this;
+            this.commands.set(command.name, command);
         }
 
-        this.client = new Client({
-            presence: {
-                afk: false,
-                status: "online",
-                activity: {
-                    name: `the bot reboot`,
-                    type: "WATCHING"
-                }
-            }
-        });
+        this.on("ready", () => this.ready());
+        this.on("interactionCreate", (i) => this.interaction(i));
 
-        this.client.on('ready', () => {
-            this.ready()
-        });
-
-        this.log.info("Bot initialised. Starting...");
-
-        this.start();
+        this.restClient = new REST({ version: "9" }).setToken(
+            this.config.bot.token,
+        );
+        await this.login(this.config.bot.token);
     }
 
-    start() {
-        this.client.login(config.token);
+    async ready() {
+        await this.fetcher.start();
 
-        setInterval(() => {
-            this.client.user?.setPresence({
-                afk: false,
-                status: "online",
-                activity: {
-                    name: `${readdirSync(<string>this.paths.get("cache")).length} Hashnode blogs across ${this.client.guilds.cache.size} servers`,
-                    type: "WATCHING"
-                }
-            })
-        }, 5000);
+        if (!this.application) return;
+
+        await this.restClient.put(
+            Routes.applicationCommands(this.application.id),
+            {
+                body: [
+                    ...[...this.commands.values()].map((c) => ({
+                        type: ApplicationCommandTypes.CHAT_INPUT,
+                        ...c.builder.toJSON(),
+                    })),
+                    {
+                        type: ApplicationCommandTypes.MESSAGE,
+                        name: "View blog url",
+                    },
+                ],
+            },
+        );
+
+        console.log(chalk`{green Ready}`);
     }
 
-    ready() {
-        this.log.info(`Logged in as ${this.client.user?.tag}`);
-        readdirSync(resolve(__dirname, '../modules')).forEach((p) => {
-            if (lstatSync(resolve(__dirname, '../modules', p)).isDirectory()) return false;
-            let module = require(resolve(__dirname, '../modules', p)).default,
-                Module: Module;
-            try {
-                Module = new module(this);
-            } catch (e) {
-                return false;
-            }
-            if (!Module.info) {
-                return false;
-            }
-            this.modules.set(Module.info.name, {
-                name: Module.info.name,
-                instance: Module,
-                enabled: true,
-                commands: []
-            });
-            Module.ready();
-            this.log.info(`Registered module ${Module.info.name}`);
+    async interaction(i: Interaction) {
+        if (i.isCommand() && this.commands.has(i.commandName)) {
+            const cmd = this.commands.get(i.commandName) as Command;
 
-            return true;
-        });
-
-        this.eventPass();
-
-        this.client.on('message', (msg) => this.handleCommand(msg));
-    }
-
-    eventPass() {
-        this.client.on('message', (msg) => {
-            this.modules.forEach((v) => {
-                if (v.enabled) {
-                    v.instance.message(msg);
-                }
-            });
-        });
-    }
-
-    registerCommand(module: Module, command: Command) {
-        this.commands.set(command.info.name, {
-            module: module.info.name,
-            instance: command,
-        });
-        command.info.alias.forEach(alias => {
-            this.commands.set(alias, {
-                alias: command.info.name
-            })
-        });
-        let emodule = this.modules.get(module.info.name);
-        if (emodule !== undefined) {
-            emodule.commands.push(command.info.name);
-            this.modules.set(module.info.name, emodule);
-        }
-    }
-
-    handleCommand(msg: Message) {
-        if (msg.content.startsWith(config.prefix)) {
-            let command = msg.content.split(" ")[0].replace(config.prefix, "").toLowerCase(),
-                args = msg.content.replace(`${config.prefix}${command} `, "").split(" ");
-
-            if (msg.content.startsWith(`${config.prefix} `)) {
-                command = msg.content.replace(config.prefix + " ", "").split(" ")[0].toLowerCase();
-            }
-
-            if (this.commands.has(command)) {
-                let cmd: commandMapInfo | undefined = this.commands.get(command);
-                if (cmd === undefined) return;
-                if (cmd.alias) {
-                    cmd = this.commands.get(cmd.alias);
-                }
-                if (cmd === undefined) return;
+            cmd.incoming(i);
+        } else if (i.isContextMenu()) {
+            if (i.commandName === "View blog url") {
                 try {
-                    cmd.instance?.run(msg, args);
+                    await i.deferReply({ ephemeral: true });
+
+                    const msg = i.options.getMessage("message", true);
+
+                    if (!msg.embeds || msg.embeds.length <= 0)
+                        return await i.reply(`No data`);
+
+                    const embed = msg.embeds[0];
+
+                    if (!embed.footer || !embed.footer.text)
+                        return await i.reply(`No data`);
+
+                    const username = (
+                        embed.footer.text.includes("  •  ")
+                            ? embed.footer.text.split("  •  ")[1]
+                            : embed.footer.text
+                    ).split(" ")[0];
+
+                    const message = await (
+                        i.channel as TextChannel
+                    ).messages.fetch(msg.id);
+                    if (!message.guild) return await i.reply(`No guild found`);
+
+                    const follow = await this.db.follow.findUnique({
+                        where: {
+                            guildId_channelId_username: {
+                                guildId: message.guild.id,
+                                channelId: (i.channel as TextChannel).id,
+                                username,
+                            },
+                        },
+                    });
+
+                    if (!follow) return await i.reply(`No subscription found`);
+
+                    await i.reply(`https://${follow.publicationDomain}`);
                 } catch (e) {
-                    msg.reply(`There was an error while executing this command. Message: ${e.message}`);
-                    console.error(e);
+                    await (i.replied ? i.editReply : i.reply)(
+                        `Error: \`${e.message}\``,
+                    );
                 }
             }
-            // } else {
-            //     msg.reply("Sorry, that command does not exist!");
-            // }
         }
     }
-}
-
-export interface moduleMapInfo {
-    name: string,
-    instance: Module,
-    enabled: boolean,
-    commands: string[]
-}
-
-export interface commandMapInfo {
-    module?: string,
-    instance?: Command,
-    alias?: string
 }

@@ -1,0 +1,15 @@
+node_modules
+dist
+types
+assets
+data
+.storybook
+public
+build
+docs
+deps/
+_build/
+.elixir_ls
+assets
+priv
+src/grammar/

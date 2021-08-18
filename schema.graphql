@@ -1,0 +1,447 @@
+# This file was generated based on ".graphqlconfig". Do not edit manually.
+
+schema {
+    query: Query
+    mutation: Mutation
+}
+
+interface MutationOutput {
+    code: Int!
+    message: String!
+    success: Boolean!
+}
+
+type Contributor {
+    _id: ID
+    stamp: String
+    user: User
+}
+
+type CreatePostOutput implements MutationOutput {
+    code: Int!
+    message: String!
+    post: PostDetailed
+    success: Boolean!
+}
+
+type DeleteOutput implements MutationOutput {
+    code: Int!
+    message: String!
+    success: Boolean!
+}
+
+type FollowUserOutput implements MutationOutput {
+    code: Int!
+    message: String!
+    success: Boolean!
+}
+
+type Links {
+    github: String
+    hashnode: String
+    twitter: String
+    website: String
+}
+
+type Mutation {
+    createPublicationStory(hideFromHashnodeFeed: Boolean = false, input: CreateStoryInput!, publicationId: String!): CreatePostOutput!
+    createReply(input: createReplyInput!): createReplyOutput!
+    createResponse(input: createResponseInput!): createResponseOutput!
+    createStory(input: CreateStoryInput!): CreatePostOutput!
+    deletePost(id: String!): DeleteOutput!
+    deleteReply(postId: String!, replyId: String!, responseId: String!): DeleteOutput!
+    deleteResponse(postId: String!, responseId: String!): DeleteOutput!
+    followUser(userId: String!): FollowUserOutput!
+    reactToReply(input: ReactToReplyInput!): ReactToReplyOutput!
+    reactToResponse(input: ReactToResponseInput!): ReactToResponseOutput!
+    reactToStory(input: ReactToPostInput!): ReactToPostOutput!
+    updateReply(contentInMarkdown: String!, postId: String!, replyId: String!, responseId: String!): createReplyOutput!
+    updateResponse(contentInMarkdown: String!, postId: String, responseId: String!): createResponseOutput!
+    updateStory(input: UpdateStoryInput!, postId: String!): CreatePostOutput!
+}
+
+type Poll {
+    pollClosingDate: String
+    pollOptions: [PollOption]
+    pollRunningTime: String
+    totalVotes: Int
+}
+
+type PollOption {
+    _id: ID!
+    option: String!
+    votes: Int!
+}
+
+type Post {
+    _id: ID!
+    author: User
+    bookmarkedIn: [String]
+    brief: String
+    contentMarkdown: String
+    contributors: [Contributor]
+    coverImage: String!
+    cuid: String
+    dateAdded: String
+    dateFeatured: String
+    dateUpdated: String
+    followersCount: Int
+    isActive: Boolean
+    isAnonymous: Boolean
+    numUniqueUsersWhoReacted: Int
+    partOfPublication: Boolean
+    poll: Poll
+    popularity: Float
+    reactions: [Reaction]
+    reactionsByCurrentUser: [Reaction]
+    replyCount: Int
+    responseCount: Int
+    slug: String
+    tags: [Tag]
+    title: String
+    totalReactions: Int
+    type: String!
+}
+
+type PostDetailed {
+    _id: ID!
+    author: User
+    bookmarkedIn: [String]
+    brief: String
+    content: String
+    contentMarkdown: String
+    contributors: [Contributor]
+    coverImage: String
+    cuid: String
+    dateAdded: String
+    dateUpdated: String
+    followersCount: Int
+    isActive: Boolean
+    isAnonymous: Boolean
+    isDelisted: Boolean
+    isFeatured: Boolean
+    isRepublished: Boolean
+    numCollapsed: Int
+    partOfPublication: Boolean
+    poll: Poll
+    popularity: Float
+    publication: Publication
+    reactions: [ReactionsAndCount]
+    reactionsByCurrentUser: [Reaction]
+    replyCount: Int
+    responseCount: Int
+    responses(page: Int = 0): [Response!]!
+    slug: String
+    sourcedFromGithub: Boolean
+    tags: [Tag]
+    title: String
+    totalReactions: Int
+    type: String
+    untaggedFrom: [String]
+}
+
+type Publication {
+    _id: ID!
+    author: String
+    description: String
+    displayTitle: String
+    domain: String
+    embedCode: String
+    favicon: String
+    fbPixelID: String
+    gaTrackingID: String
+    headerColor: String
+    imprint: String
+    imprintMarkdown: String
+    isAMPEnabled: Boolean
+    isActive: Boolean
+    layout: String
+    links: Links
+    logo: String
+    meta: String
+    metaHTML: String
+    metaTags: String
+    ogImage: String
+    posts(page: Int = 0): [Post]
+    sitemapSubmitted: Boolean
+    title: String
+    tweetedAboutBlog: Boolean
+    username: String
+}
+
+type Query {
+    amas(page: Int): [Post]
+    post(hostname: String, slug: String!): PostDetailed
+    storiesFeed(page: Int = 0, type: FeedType!): [Post]
+    tagCategories: [TagCategory]
+    user(username: String!): User
+}
+
+type ReactToPostOutput implements MutationOutput {
+    code: Int!
+    message: String!
+    success: Boolean!
+}
+
+type ReactToReplyOutput implements MutationOutput {
+    code: Int!
+    message: String!
+    success: Boolean!
+}
+
+type ReactToResponseOutput implements MutationOutput {
+    code: Int!
+    message: String!
+    success: Boolean!
+}
+
+type Reaction {
+    image: String!
+    name: ReactionName!
+}
+
+type ReactionsAndCount {
+    count: Int!
+    reaction: Reaction!
+}
+
+type Reply {
+    _id: ID!
+    author: User!
+    content: String!
+    contentMarkdown: String!
+    dateAdded: String!
+    isActive: Boolean
+    reactions: [ReactionsAndCount]
+    reactionsByCurrentUser: [Reaction]
+    stamp: String
+    totalReactions: Int
+}
+
+type Response {
+    _id: ID!
+    author: User
+    bookmarkedIn: [String]
+    content: String
+    contentMarkdown: String
+    dateAdded: String
+    isActive: Boolean
+    isCollapsed: Boolean
+    popularity: Float
+    post: String
+    reactions: [ReactionsAndCount]
+    reactionsByCurrentUser: [Reaction]
+    replies: [Reply]
+    stamp: String
+    totalReactions: Int
+}
+
+type SocialMedia {
+    facebook: String
+    github: String
+    google: String
+    linkedin: String
+    stackoverflow: String
+    twitter: String
+    website: String
+}
+
+type Tag {
+    _id: ID!
+    contributors: TagContributors
+    followersCount: Int
+    isActive: Boolean
+    isApproved: Boolean
+    leaderboard: TagLeaderBoard
+    logo: String
+    managers: [TagManager]
+    name: String
+    numPosts: Int
+    posts(filter: TagsPostFilter!, page: Int = 0): [Post]
+    slug: String
+    socialMedia: TagSocialMedia
+    stats: TagStats
+    tagline: String
+    wiki: String
+    wikiMarkdown: String
+}
+
+type TagCategory {
+    _id: ID!
+    isActive: Boolean!
+    name: String!
+    priority: Int
+    slug: String!
+    tags: [Tag]
+}
+
+type TagContributorLeaders {
+    allTimeTopDevelopers: [TagLeaderBoardMember]
+    monthlyTopDevelopers: [TagLeaderBoardMember]
+}
+
+type TagContributors {
+    leaders: TagContributorLeaders
+    managers: [TagManager]
+}
+
+type TagLeaderBoard {
+    allTimeTopDevelopers: [TagLeaderBoardMember]
+    monthlyTopDevelopers: [TagLeaderBoardMember]
+}
+
+type TagLeaderBoardMember {
+    appreciations: Int
+    upvotes: Int
+    user: User
+}
+
+type TagManager {
+    _id: ID!
+    role: String!
+    user: User
+}
+
+type TagSocialMedia {
+    github: String
+    officialWebsite: String
+    twitter: String
+}
+
+type TagStats {
+    currentWeekFollowersCount: Int
+    currentWeekPostsCount: Int
+    lastWeekFollowersCount: Int
+    lastWeekPostsCount: Int
+}
+
+type User {
+    _id: ID!
+    blogHandle: String
+    coverImage: String
+    dateJoined: String
+    followers: [User]
+    isDeactivated: Boolean
+    isEvangelist: Boolean
+    location: String
+    name: String
+    numFollowers: Int
+    numFollowing: Int
+    numPosts: Int
+    numReactions: Int
+    photo: String
+    publication: Publication
+    publicationDomain: String
+    socialMedia: SocialMedia
+    tagline: String
+    username: String
+}
+
+type createReplyOutput implements MutationOutput {
+    code: Int!
+    message: String!
+    reply: Response
+    success: Boolean!
+}
+
+type createResponseOutput implements MutationOutput {
+    code: Int!
+    message: String!
+    response: Response
+    success: Boolean!
+}
+
+enum FeedType {
+    BEST
+    COMMUNITY
+    FEATURED
+    NEW
+}
+
+enum ReactionName {
+    BEER
+    CLAP
+    HEART_EYES
+    LOVE
+    PARTY
+    ROCKET
+    TAKE_MY_MONEY
+    THUMBS_UP
+    TROPHY
+    UNICORN
+}
+
+enum TagsPostFilter {
+    BEST
+    HOT
+    RECENT
+}
+
+input CreateStoryInput {
+    contentMarkdown: String!
+    coverImageURL: String
+    isAnonymous: Boolean
+    isRepublished: isRepublished
+    slug: String
+    sourcedFromGithub: Boolean
+    tags: [TagsInput]!
+    title: String!
+}
+
+input PollOptionInput {
+    content: String!
+}
+
+input PublicationDetails {
+    publicationId: String!
+}
+
+input ReactToPostInput {
+    postId: String!
+    reaction: ReactionName!
+}
+
+input ReactToReplyInput {
+    postId: String!
+    reaction: ReactionName!
+    replyId: String!
+    responseId: String!
+}
+
+input ReactToResponseInput {
+    postId: String!
+    reaction: ReactionName!
+    responseId: String!
+}
+
+input TagsInput {
+    _id: ID!
+    name: String
+    slug: String
+}
+
+input UpdateStoryInput {
+    contentMarkdown: String!
+    coverImageURL: String
+    isPartOfPublication: PublicationDetails!
+    isRepublished: isRepublished
+    slug: String
+    sourcedFromGithub: Boolean
+    tags: [TagsInput]!
+    title: String!
+}
+
+input createReplyInput {
+    contentInMarkdown: String!
+    postId: String!
+    responseId: String!
+}
+
+input createResponseInput {
+    contentInMarkdown: String!
+    postId: String!
+}
+
+input isRepublished {
+    originalArticleURL: String!
+}

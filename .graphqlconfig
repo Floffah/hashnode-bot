@@ -1,0 +1,15 @@
+{
+    "name": "HashNode Schema",
+    "schemaPath": "./schema.graphql",
+    "extensions": {
+        "endpoints": {
+            "Hashnode": {
+                "url": "https://api.hashnode.com/",
+                "headers": {
+                    "user-agent": "JS GraphQL"
+                },
+                "introspect": true
+            }
+        }
+    }
+}
