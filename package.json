@@ -4,7 +4,7 @@
     "description": "Unofficial Hashnode Discord bot",
     "main": "out/init.js",
     "scripts": {
-        "test": "yarn tsc && node ."
+        "prepare": "tsup --minify"
     },
     "repository": {
         "type": "git",

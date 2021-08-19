@@ -185,7 +185,7 @@ export default class Bot extends Client {
 
                 for (const follow of data.following) {
                     const cuids =
-                        cached[follow.name.toLowercase()] ??
+                        cached[follow.name.toLowerCase()] ??
                         (() => {
                             const cachedata = jjuParse(
                                 readFileSync(
