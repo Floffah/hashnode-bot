@@ -40,15 +40,22 @@ export default class Fetcher {
     async fetch() {
         const follows = await this.bot.db.follow.findMany();
 
+        const justFetched: { [username: string]: any } = {};
+
         for (const follow of follows) {
             const channel = (await this.bot.channels.fetch(
                 follow.channelId,
             )) as TextChannel;
 
             if (channel) {
-                const data = await this.bot.gql.request(query, {
-                    username: follow.username,
-                });
+                const data =
+                    justFetched[follow.username] ??
+                    (await this.bot.gql.request(query, {
+                        username: follow.username,
+                    }));
+
+                if (!(follow.username in justFetched))
+                    justFetched[follow.username] = data;
 
                 if (data.error) {
                     await channel.send({
@@ -75,20 +82,22 @@ export default class Fetcher {
 
                             const embed = new MessageEmbed()
                                 .setTitle(post.title)
-                                .setURL(
-                                    `https://${data.user.publicationDomain}/${post.slug}-${post.cuid}${post.user.name} on Hashnode`,
-                                )
                                 .setFooter(
                                     `${
                                         post.tags
-                                            ? post.tags.join(", ") + "  •  "
+                                            ? post.tags
+                                                  .map((t: any) => t.name)
+                                                  .join(", ") + "  •  "
                                             : ""
-                                    }`,
+                                    }${data.user.name} on Hashnode`,
                                 )
-                                .setAuthor(post.user.name, post.user.photo)
-                                .setTimestamp(new Date(post.dateAdded))
+                                .setAuthor(data.user.name, data.user.photo)
+                                .setTimestamp(Date.parse(post.dateAdded))
                                 .setDescription(post.brief)
-                                .setColor("#3366FF");
+                                .setColor("#3366FF")
+                                .setURL(
+                                    `https://${data.user.publicationDomain}/${post.slug}-${post.cuid}`,
+                                );
 
                             if (post.coverImage)
                                 embed.setImage(post.coverImage);
@@ -104,14 +113,20 @@ export default class Fetcher {
                     }
 
                     if (update.length > 0) {
-                        this.bot.db.follow.update({
+                        await this.bot.db.follow.update({
                             where: {
                                 id: follow.id,
                             },
                             data: {
-                                previousCuids: {
-                                    push: update,
-                                },
+                                previousCuids:
+                                    follow.previousCuids &&
+                                    follow.previousCuids.length > 0
+                                        ? {
+                                              push: update,
+                                          }
+                                        : {
+                                              set: update,
+                                          },
                             },
                         });
                     }

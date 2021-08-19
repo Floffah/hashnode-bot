@@ -300,6 +300,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/jju@npm:^1.4.2":
+  version: 1.4.2
+  resolution: "@types/jju@npm:1.4.2"
+  checksum: fccba898d4f9ef8333cd6f21278c0a8e245d57235dd7796fd3a810a10efd4dcb72ae4e60bc4c8677b4268b6e1cb1ddd9816774e71171bb0f03a6284505b215e6
+  languageName: node
+  linkType: hard
+
 "@types/json-schema@npm:^7.0.7":
   version: 7.0.9
   resolution: "@types/json-schema@npm:7.0.9"
@@ -1995,6 +2002,7 @@ fsevents@~2.3.2:
     "@discordjs/rest": ^0.1.0-canary.0
     "@prisma/client": ^2.29.1
     "@types/ini": ^1.3.30
+    "@types/jju": ^1.4.2
     "@types/node": ^16.6.1
     "@typescript-eslint/eslint-plugin": ^4.29.2
     "@typescript-eslint/parser": ^4.29.2
@@ -2010,6 +2018,7 @@ fsevents@~2.3.2:
     graphql-request: ^3.5.0
     graphql-tag: ^2.12.5
     ini: ^2.0.0
+    jju: ^1.4.0
     npm-check-updates: ^11.8.3
     prettier: ^2.3.2
     prisma: ^2.29.1
@@ -2357,7 +2366,7 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"jju@npm:^1.1.0":
+"jju@npm:^1.1.0, jju@npm:^1.4.0":
   version: 1.4.0
   resolution: "jju@npm:1.4.0"
   checksum: 3790481bd2b7827dd6336e6e3dc2dcc6d425679ba7ebde7b679f61dceb4457ea0cda330972494de608571f4973c6dfb5f70fab6f3c5037dbab19ac449a60424f
